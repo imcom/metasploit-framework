@@ -1,5 +1,5 @@
 ##
-# This module requires Metasploit: http//metasploit.com/download
+# This module requires Metasploit: http://metasploit.com/download
 # Current source: https://github.com/rapid7/metasploit-framework
 ##
 
@@ -47,6 +47,8 @@ class Metasploit3 < Msf::Auxiliary
             user_as_pass: datastore['USER_AS_PASS'],
         )
 
+        cred_collection = prepend_db_passwords(cred_collection)
+
         scanner = Metasploit::Framework::LoginScanner::MySQL.new(
             host: ip,
             port: rport,
@@ -56,55 +58,29 @@ class Metasploit3 < Msf::Auxiliary
             connection_timeout: 30
         )
 
-        service_data = {
-            address: ip,
-            port: rport,
-            service_name: 'mysql',
-            protocol: 'tcp',
-            workspace_id: myworkspace_id
-        }
-
         scanner.scan! do |result|
+          credential_data = result.to_h
+          credential_data.merge!(
+              module_fullname: self.fullname,
+              workspace_id: myworkspace_id
+          )
           if result.success?
-            credential_data = {
-                module_fullname: self.fullname,
-                origin_type: :service,
-                private_data: result.credential.private,
-                private_type: :password,
-                username: result.credential.public
-            }
-            credential_data.merge!(service_data)
-
             credential_core = create_credential(credential_data)
+            credential_data[:core] = credential_core
+            create_credential_login(credential_data)
 
-            login_data = {
-                core: credential_core,
-                last_attempted_at: DateTime.now,
-                status: Metasploit::Model::Login::Status::SUCCESSFUL
-            }
-            login_data.merge!(service_data)
-
-            create_credential_login(login_data)
             print_good "#{ip}:#{rport} - LOGIN SUCCESSFUL: #{result.credential}"
           else
-            invalidate_login(
-                address: ip,
-                port: rport,
-                protocol: 'tcp',
-                public: result.credential.public,
-                private: result.credential.private,
-                realm_key: nil,
-                realm_value: nil,
-                status: result.status)
-            print_status "#{ip}:#{rport} - LOGIN FAILED: #{result.credential} (#{result.status}: #{result.proof})"
+            invalidate_login(credential_data)
+            vprint_error "#{ip}:#{rport} - LOGIN FAILED: #{result.credential} (#{result.status}: #{result.proof})"
           end
         end
 
       else
-        print_error "#{target} - Unsupported target version of MySQL detected. Skipping."
+        vprint_error "#{target} - Unsupported target version of MySQL detected. Skipping."
       end
     rescue ::Rex::ConnectionError, ::EOFError => e
-      print_error "#{target} - Unable to connect: #{e.to_s}"
+      vprint_error "#{target} - Unable to connect: #{e.to_s}"
     end
   end
 

@@ -1,5 +1,5 @@
 ##
-# This module requires Metasploit: http//metasploit.com/download
+# This module requires Metasploit: http://metasploit.com/download
 # Current source: https://github.com/rapid7/metasploit-framework
 ##
 
@@ -96,6 +96,9 @@ class Metasploit3 < Msf::Auxiliary
       realm: domain,
     )
 
+    cred_collection = prepend_db_passwords(cred_collection)
+    cred_collection = prepend_db_hashes(cred_collection)
+
     @scanner.cred_details = cred_collection
 
     @scanner.scan! do |result|
@@ -109,7 +112,9 @@ class Metasploit3 < Msf::Auxiliary
         report_creds(ip, rport, result)
         :next_user
       when Metasploit::Model::Login::Status::UNABLE_TO_CONNECT
-        print_brute :level => :verror, :ip => ip, :msg => "Could not connect"
+        if datastore['VERBOSE']
+          print_brute :level => :verror, :ip => ip, :msg => "Could not connect"
+        end
         invalidate_login(
             address: ip,
             port: rport,
@@ -122,7 +127,9 @@ class Metasploit3 < Msf::Auxiliary
         )
         :abort
       when Metasploit::Model::Login::Status::INCORRECT
-        print_brute :level => :verror, :ip => ip, :msg => "Failed: '#{result.credential}', #{result.proof}"
+        if datastore['VERBOSE']
+          print_brute :level => :verror, :ip => ip, :msg => "Failed: '#{result.credential}', #{result.proof}"
+        end
         invalidate_login(
           address: ip,
           port: rport,
@@ -172,7 +179,9 @@ class Metasploit3 < Msf::Auxiliary
       module_fullname: self.fullname,
       origin_type: :service,
       private_data: result.credential.private,
-      private_type: :password,
+      private_type: (
+        Rex::Proto::NTLM::Utils.is_pass_ntlm_hash?(result.credential.private) ? :ntlm_hash : :password
+      ),
       username: result.credential.public,
     }.merge(service_data)
 
