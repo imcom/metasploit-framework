@@ -89,7 +89,7 @@ class Metasploit3 < Msf::Auxiliary
       'Author'         => [
         'Masashi Kikuchi', # Vulnerability discovery
         'Craig Young <CYoung[at]tripwire.com>', # Original Scanner. This module is based on it.
-        'juan vazquez' # Msf module
+        'juan vazquez' # Metasploit module
       ],
       'References'     =>
         [
@@ -109,10 +109,6 @@ class Metasploit3 < Msf::Auxiliary
         OptEnum.new('TLS_VERSION', [true, 'TLS/SSL version to use', '1.0', ['SSLv3','1.0', '1.1', '1.2']]),
         OptInt.new('RESPONSE_TIMEOUT', [true, 'Number of seconds to wait for a server response', 10])
       ], self.class)
-  end
-
-  def peer
-    "#{rhost}:#{rport}"
   end
 
   def response_timeout

